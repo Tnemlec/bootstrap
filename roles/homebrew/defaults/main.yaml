@@ -1,0 +1,5 @@
+---
+# Homebrew packages to be installed
+homebrew_formulae: []
+
+homebrew_edit_rc_file: true

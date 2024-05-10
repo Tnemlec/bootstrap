@@ -1,0 +1,2 @@
+zsh_install_oh_my_zsh: true
+zsh_create_default_zshrc: true

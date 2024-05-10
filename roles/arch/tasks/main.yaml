@@ -1,0 +1,11 @@
+# deb packages use format different (amd64) than ansible_architecture (x86_64)
+- name: "Set arch"
+  tags: "set_arch"
+  block:
+    - name: "Get CPU architecture" # noqa no-changed-when
+      ansible.builtin.command: "dpkg --print-architecture"
+      register: "arch"
+
+    - name: "Set CPU architecture fact"
+      ansible.builtin.set_fact:
+        arch: "{{ arch.stdout }}"

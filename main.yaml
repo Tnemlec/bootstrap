@@ -1,0 +1,41 @@
+- name: Run playbook
+  hosts: all
+  vars:
+    # Global
+    username: "{{ ansible_env.USER }}"
+    home: "/home/{{ username }}"
+
+    # Zsh
+    zsh_install_oh_my_zsh: true
+    zsh_create_default_zshrc: true
+
+    # Git
+    git_email:
+    git_username:
+    git_create_new_sshkey: true
+
+    # Homerew
+    homebrew_edit_rc_file: true
+    homebrew_formulae:
+
+    # Mise
+    mise_edit_rc_file: true
+    mise_plugins:
+      - go@latest
+      - node@latest
+      - eza@latest
+      - zoxide@latest
+    mise_line_in_file: |
+      alias ls="eza --icons --group-directories-first"
+      eval "$(zoxide init --cmd cd zsh)"
+
+  roles:
+    - { role: "base", tags: "base" }
+    - { role: "zsh", tags: "zsh" }
+    - { role: "git", tags: "git" }
+    - { role: "homebrew", tags: "homebrew" }
+    - { role: "mise", tags: "mise" }
+    - { role: "vscode", tags: "vscode" }
+    - { role: "lens", tags: "lens" }
+    - { role: "mongodb", tags: "mongodb" }
+    - { role: "geerlingguy.docker", tags: "docker" }

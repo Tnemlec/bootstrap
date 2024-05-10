@@ -1,0 +1,43 @@
+- name: Install Homebrew
+  ansible.builtin.shell: |
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Update RC file
+  when: homebrew_edit_rc_file
+  block:
+    - name: Get the user shell
+      ansible.builtin.shell: |
+        set -o pipefail
+        egrep "^{{ username }}:" /etc/passwd | awk -F: '{ print $7 }' | awk -F/ '{print $4}'
+      args:
+        executable: /bin/bash
+      changed_when: false
+      register: user_shell
+
+    - name: Add homebrew path to system-wide $PATH for bash shell (Debian OS Family).
+      ansible.builtin.lineinfile:
+        path: "/home/{{ username }}/.bashrc"
+        line: "export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin"
+        owner: "{{ username }}"
+        mode: "0644"
+        create: true
+      when:
+        - user_shell.stdout == "bash"
+
+    - name: Add homebrew path to system-wide $PATH for zsh shell.
+      ansible.builtin.lineinfile:
+        path: "/home/{{ username }}/.zshrc"
+        line: "export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin"
+        owner: "{{ username }}"
+        mode: "0644"
+        create: true
+      when: user_shell.stdout == "zsh"
+
+- name: Install formulae
+  community.general.homebrew:
+    name: "{{ homebrew_formulae }}"
+    state: present
+    path: "/home/linuxbrew/.linuxbrew/bin"

@@ -1,0 +1,20 @@
+- name: Install MongoDB
+  block:
+    - name: Add repository to sources list # noqa risky-shell-pipe command-instead-of-module
+      ansible.builtin.shell: |
+        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
+          sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --yes \
+          --dearmor
+        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" \
+         | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+      become: true
+      changed_when: false
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+    - name: Install MongoDB package
+      ansible.builtin.apt:
+        name: mongodb-org
+        state: present
+      become: true

@@ -1,0 +1,40 @@
+- name: "Set global git username"
+  community.general.git_config:
+    name: "user.name"
+    scope: "global"
+    value: "{{ git_username }}"
+
+- name: "Set global git email"
+  community.general.git_config:
+    name: "user.email"
+    scope: "global"
+    value: "{{ git_email }}"
+- name: Check if id_ed25519.pub exists
+  ansible.builtin.stat:
+    path: "{{ home }}/.ssh/id_ed25519.pub"
+  register: git_id_ed25519_file_data
+- name: "Create new ssh keys"
+  when: git_create_new_sshkey and not git_id_ed25519_file_data.stat.exists
+  block:
+    - name: "Generate new keys"
+      register: ssh_key
+      community.crypto.openssh_keypair:
+        type: "ed25519"
+        path: "{{ home }}/.ssh/id_ed25519"
+        mode: "644"
+        force: true
+    - name: "Print ssh public key"
+      ansible.builtin.debug:
+        msg: "Public key: {{ ssh_key['public_key'] }}"
+    - name: "Wait for user confirmation"
+      ansible.builtin.pause:
+        prompt: "Please confirm that you've copied the SSH public key. Press Enter to continue."
+- name: "Get old public ssh_keys"
+  when: git_id_ed25519_file_data.stat.exists
+  block:
+    - name: "Print ssh public key"
+      ansible.builtin.debug:
+        msg: "Public key: {{ lookup('ansible.builtin.file', '{{ home }}/.ssh/id_ed25519.pub') }}"
+    - name: "Wait for user confirmation"
+      ansible.builtin.pause:
+        prompt: "Please confirm that you've copied the SSH public key. Press Enter to continue."

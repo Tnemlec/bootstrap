@@ -1,0 +1,44 @@
+- name: "Install zsh"
+  become: true
+  ansible.builtin.apt:
+    name: "zsh"
+
+- name: "Get zsh installed path."
+  ansible.builtin.shell: "command -v zsh" # noqa command-instead-of-shell
+  register: zsh_installed_path
+  changed_when: false
+
+- name: "Make zsh default shell"
+  become: true
+  ansible.builtin.user:
+    name: "{{ username }}"
+    shell: "{{ zsh_installed_path.stdout }}"
+
+- name: Install oh my zsh
+  when: zsh_install_oh_my_zsh
+  block:
+    - name: "Clone ohmyzsh" # noqa latest[git]
+      ansible.builtin.git:
+        repo: "https://github.com/ohmyzsh/ohmyzsh"
+        dest: "{{ home }}/.oh-my-zsh"
+
+    - name: "Create default .zshrc"
+      when: zsh_create_default_zshrc
+      block:
+        - name: "Check if .zshrc exists"
+          ansible.builtin.stat:
+            path: "{{ home }}/.zshrc"
+          register: zsh_zshrc_file_data
+
+        - name: "Save old .zshrc if exists"
+          when: zsh_zshrc_file_data.stat.exists
+          ansible.builtin.copy:
+            src: "{{ home }}/.zshrc"
+            dest: "{{ home }}/.zshrc.orig"
+            mode: preserve
+
+        - name: "Create standard .zshrc file"
+          ansible.builtin.copy:
+            src: "{{ home }}/.oh-my-zsh/templates/zshrc.zsh-template"
+            dest: "{{ home }}/.zshrc"
+            mode: preserve

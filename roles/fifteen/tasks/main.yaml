@@ -1,0 +1,7 @@
+###
+# FIF
+# Git options
+# Protoc
+# GCloud / gcloud auth configure-docker https://github.com/ansible/role-install-gcloud
+# Mongodb
+# Zoov_root / go env -w birotaio
