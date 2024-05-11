@@ -1,7 +1,85 @@
 ###
-# FIF
-# Git options
-# Protoc
 # GCloud / gcloud auth configure-docker https://github.com/ansible/role-install-gcloud
-# Mongodb
-# Zoov_root / go env -w birotaio
+- name: Check pip3 is installed
+  ansible.builtin.apt:
+    name:
+      - pip
+      - pipx
+    state: present
+  become: true
+
+- name: Install fif-cli
+  community.general.pipx:
+    name: fif-cli
+    source: git+ssh://git@github.com/birotaio/fif-cli.git
+  ignore_errors: true
+
+- name: Install protoc
+  ansible.builtin.apt:
+    name: protobuf-compiler
+    state: present
+  become: true
+
+- name: Export ZOOV_ROOT
+  ansible.builtin.lineinfile:
+    path: "{{ home }}/.zshrc"
+    line: export ZOOV_ROOT="{{ fifteen_root }}"
+    state: present
+
+- name: Go env
+  ansible.builtin.lineinfile:
+    path: "{{ home }}/.config/go/env"
+    line: GOPRIVATE=github.com/birotaio/*
+    create: true
+    mode: "664"
+
+- name: Git options
+  block:
+    - name: Replace url (1)
+      community.general.git_config:
+        scope: global
+        name: "url.git@github.com:.insteadOf"
+        value: "https://github.com/"
+    - name: Replace url (2)
+      community.general.git_config:
+        scope: global
+        name: url.git://.insteadOf
+        value: "https://"
+    - name: Define editor
+      community.general.git_config:
+        scope: global
+        name: "core.editor"
+        value: "code --wait"
+
+- name: Install gcloud
+  block:
+    - name: Using mise
+      ansible.builtin.command:
+        cmd: mise use -g gcloud@latest -y
+      changed_when: false
+
+    - name: Add gcloud autocompletion
+      ansible.builtin.lineinfile:
+        path: "{{ home }}/.zshrc"
+        line: plugins+=(gcloud)
+        insertbefore: 'source \$ZSH\/oh-my-zsh\.sh'
+        state: present
+
+    - name: Add CLOUDSDK_HOME
+      ansible.builtin.lineinfile:
+        path: "{{ home }}/.zshrc"
+        line: export CLOUDSDK_HOME="{{ home }}/.local/share/mise/installs/gcloud/latest"
+        insertbefore: BOF
+        state: present
+
+    - name: Configure docker
+      ansible.builtin.command:
+        cmd: gcloud auth configure-docker gcr.io,eu.gcr.io --quiet
+        creates: "{{ home }}/.docker/config.json"
+
+- name: Clone repo # noqa latest[git]
+  loop: "{{ fifteen_repos }}"
+  ansible.builtin.git:
+    accept_newhostkey: true
+    dest: "{{ fifteen_root }}"
+    repo: "{{ item }}"

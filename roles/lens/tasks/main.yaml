@@ -1,16 +1,16 @@
 - name: Install Lens
   block:
     - name: Add repository to sources list # noqa risky-shell-pipe command-instead-of-module
-      ansible.builtin.shell: |
-        curl -fsSL https://downloads.k8slens.dev/keys/gpg \
-         | gpg --dearmor | sudo tee /usr/share/keyrings/lens-archive-keyring.gpg > /dev/null
-        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/lens-archive-keyring.gpg] https://downloads.k8slens.dev/apt/debian stable main" \
-         | sudo tee /etc/apt/sources.list.d/lens.list > /dev/null
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://downloads.k8slens.dev/keys/gpg | gpg -o /usr/share/keyrings/lens-archive-keyring.gpg --dearmor --yes
+        creates: /usr/share/keyrings/lens-archive-keyring.gpg
       become: true
-      changed_when: false
-    - name: Update apt cache
-      ansible.builtin.apt:
+    - name: Add apt repository
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/lens-archive-keyring.gpg] https://downloads.k8slens.dev/apt/debian stable main
+        filename: lens
         update_cache: true
+        state: present
       become: true
     - name: Install Lens package
       ansible.builtin.apt:

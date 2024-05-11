@@ -1,0 +1,12 @@
+- name: Install Alacritty
+  ansible.builtin.apt:
+    name: alacritty
+    state: present
+  become: true
+
+- name: Make it default terminal
+  community.general.alternatives:
+    name: x-terminal-emulator
+    path: /usr/bin/alacritty
+    state: selected
+  become: true

@@ -1,20 +1,36 @@
 - name: Install MongoDB
   block:
     - name: Add repository to sources list # noqa risky-shell-pipe command-instead-of-module
-      ansible.builtin.shell: |
-        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-          sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --yes \
-          --dearmor
-        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" \
-         | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --yes --dearmor
+        creates: /usr/share/keyrings/mongodb-server-7.0.gpg
       become: true
-      changed_when: false
-    - name: Update apt cache
-      ansible.builtin.apt:
+
+    - name: Add apt repository
+      ansible.builtin.apt_repository:
+        repo: deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse
+        filename: mongodb-org-7.0
         update_cache: true
+        state: present
       become: true
+
     - name: Install MongoDB package
       ansible.builtin.apt:
         name: mongodb-org
+        state: present
+      become: true
+
+- name: Install MongoDB Compass
+  block:
+    - name: Add repository to sources list # noqa risky-shell-pipe command-instead-of-module
+      ansible.builtin.get_url:
+        url: https://downloads.mongodb.com/compass/mongodb-compass_1.43.0_amd64.deb
+        dest: /tmp/mongodb-compass_1.43.0_amd64.deb
+        mode: "0644"
+      become: true
+
+    - name: Install MongoDB Compass package
+      ansible.builtin.apt:
+        deb: /tmp/mongodb-compass_1.43.0_amd64.deb
         state: present
       become: true

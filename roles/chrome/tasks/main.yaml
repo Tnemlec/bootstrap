@@ -1,0 +1,17 @@
+- name: Install Google Chrome
+  block:
+    - name: Install Google Chrome # noqa risky-shell-pipe
+      ansible.builtin.shell: |
+        wget -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo apt-get install /tmp/chrome.deb -y
+      become: true
+      changed_when: false
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+    - name: Make sure google chrome is installed
+      ansible.builtin.apt:
+        name: google-chrome-stable
+        state: present
+      become: true

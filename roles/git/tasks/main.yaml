@@ -21,7 +21,7 @@
       community.crypto.openssh_keypair:
         type: "ed25519"
         path: "{{ home }}/.ssh/id_ed25519"
-        mode: "644"
+        mode: "600"
         force: true
     - name: "Print ssh public key"
       ansible.builtin.debug:

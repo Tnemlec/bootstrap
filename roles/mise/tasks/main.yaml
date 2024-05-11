@@ -1,42 +1,48 @@
 - name: Install mise
   block:
-    - name: Add gpg public key
-      ansible.builtin.get_url:
-        url: "https://mise.jdx.dev/gpg-key.pub"
-        dest: "/tmp/mise_temp_key"
-        mode: "0644"
     - name: Add repository to sources list # noqa risky-shell-pipe
-      ansible.builtin.shell: |
-        cat /tmp/mise_temp_key | gpg --dearmor | sudo tee /etc/apt/keyrings/mise-archive-keyring.gpg 1> /dev/null
-        echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main" \
-         | sudo tee /etc/apt/sources.list.d/mise.list
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://mise.jdx.dev/gpg-key.pub | gpg -o /etc/apt/keyrings/mise-archive-keyring.gpg --yes --dearmor
+        creates: /etc/apt/keyrings/mise-archive-keyring.gpg
       become: true
-      changed_when: false
-    - name: Update apt cache
-      ansible.builtin.apt:
+
+    - name: Add apt repository
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main
+        filename: mise
         update_cache: true
+        state: present
       become: true
+
     - name: Install mise package
       ansible.builtin.apt:
         name: mise
         state: present
       become: true
+
 - name: Update .zshrc file
   when: mise_edit_rc_file
   ansible.builtin.lineinfile:
     path: "{{ home }}/.zshrc"
-    line: eval "$(mise activate zsh)"
+    line: plugins+=(mise)
+    insertbefore: 'source \$ZSH\/oh-my-zsh\.sh'
+    state: present
+
 - name: Install mise plugins
   changed_when: false
   loop: "{{ mise_plugins }}"
   ignore_errors: true
   register: mise_plugin_errors
   ansible.builtin.command: mise use -g {{ item }} -y
+
 - name: "Print mise errors"
   ansible.builtin.debug:
     msg: "Errors: {{ mise_plugin_errors }}"
+
 - name: Add extra line in .zshrc file
   when: mise_edit_rc_file and mise_line_in_file
+  loop: "{{ mise_line_in_file }}"
   ansible.builtin.lineinfile:
     path: "{{ home }}/.zshrc"
-    line: "{{ mise_line_in_file }}"
+    line: "{{ item }}"
+    state: present

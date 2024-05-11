@@ -32,6 +32,16 @@
         path: "/home/{{ username }}/.zshrc"
         line: "export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin"
         owner: "{{ username }}"
+        insertbefore: BOF
+        mode: "0644"
+        create: true
+      when: user_shell.stdout == "zsh"
+    - name: Add FPATH completion
+      ansible.builtin.lineinfile:
+        path: "/home/{{ username }}/.zshrc"
+        line: "export FPATH=$FPATH:/home/linuxbrew/.linuxbrew/share/zsh/site-functions"
+        owner: "{{ username }}"
+        insertbefore: BOF
         mode: "0644"
         create: true
       when: user_shell.stdout == "zsh"

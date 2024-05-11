@@ -10,8 +10,8 @@
     zsh_create_default_zshrc: true
 
     # Git
-    git_email:
-    git_username:
+    git_email: <EMAIL>
+    git_username: <USERNAME>
     git_create_new_sshkey: true
 
     # Homerew
@@ -25,9 +25,15 @@
       - node@latest
       - eza@latest
       - zoxide@latest
-    mise_line_in_file: |
-      alias ls="eza --icons --group-directories-first"
-      eval "$(zoxide init --cmd cd zsh)"
+      - github-cli@latest
+    mise_line_in_file:
+      - export PATH="$PATH:{{ home }}/.local/bin"
+      - alias ls="eza --icons --group-directories-first"
+      - eval "$(zoxide init --cmd cd zsh)"
+
+    # Fifteen
+    fifteen_root: "{{ home }}/Fifteen"
+    fifteen_repos: []
 
   roles:
     - { role: "base", tags: "base" }
@@ -38,4 +44,8 @@
     - { role: "vscode", tags: "vscode" }
     - { role: "lens", tags: "lens" }
     - { role: "mongodb", tags: "mongodb" }
-    - { role: "geerlingguy.docker", tags: "docker" }
+    - { role: "docker", tags: "docker" }
+    - { role: "chrome", tags: "chrome" }
+    - { role: "alacritty", tags: "alacritty" }
+    - { role: "slack", tags: "slack" }
+    - { role: "fifteen", tags: "fifteen" }
